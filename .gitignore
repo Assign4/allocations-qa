@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment variables (never commit real credentials)
+.env
+
+# Test artifacts
+test-results/
+reports/
+logs/
+playwright-report/
+.features-gen/
+
+# HAR files (can contain sensitive network traffic)
+*.har
+
+# OS files
+.DS_Store
+
+# Build output
+dist/

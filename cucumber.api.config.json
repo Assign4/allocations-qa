@@ -1,0 +1,13 @@
+{
+  "default": {
+    "requireModule": ["tsx/cjs"],
+    "require": [
+      "src/api/support/**/*.ts",
+      "src/api/specs/**/*.ts",
+      "src/api/steps/**/*.ts"
+    ],
+    "paths": ["src/api/features/**/*.feature"],
+    "format": ["progress-bar", "html:reports/api/index.html"],
+    "formatOptions": { "snippetInterface": "async-await" }
+  }
+}
