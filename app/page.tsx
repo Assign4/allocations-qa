@@ -5,77 +5,102 @@ import { useState, useEffect, useCallback } from 'react';
 type RunStatus = 'idle' | 'queued' | 'in_progress' | 'completed';
 type ReportTab = 'ui' | 'api';
 
-interface StatusData {
+interface RunnerState {
   status: RunStatus;
   conclusion: string | null;
-  html_url: string | null;
+  runUrl: string | null;
+  triggering: boolean;
+  error: string | null;
 }
 
-export default function Home() {
-  const [runStatus, setRunStatus] = useState<RunStatus>('idle');
-  const [conclusion, setConclusion] = useState<string | null>(null);
-  const [runUrl, setRunUrl] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ReportTab>('ui');
-  const [triggering, setTriggering] = useState(false);
+function useTestRunner(type: ReportTab) {
+  const [state, setState] = useState<RunnerState>({
+    status: 'idle',
+    conclusion: null,
+    runUrl: null,
+    triggering: false,
+    error: null,
+  });
 
   const checkStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/test-status');
-      const data: StatusData = await res.json();
-      setRunStatus(data.status ?? 'idle');
-      setConclusion(data.conclusion ?? null);
-      setRunUrl(data.html_url ?? null);
-    } catch {
-      /* ignore network errors */
-    }
-  }, []);
+      const res = await fetch(`/api/test-status?type=${type}`);
+      const data = await res.json();
+      setState(s => ({
+        ...s,
+        status: data.status ?? 'idle',
+        conclusion: data.conclusion ?? null,
+        runUrl: data.html_url ?? null,
+      }));
+    } catch { /* ignore network errors */ }
+  }, [type]);
+
+  useEffect(() => { checkStatus(); }, [checkStatus]);
 
   useEffect(() => {
-    checkStatus();
-  }, [checkStatus]);
-
-  useEffect(() => {
-    const active = runStatus === 'queued' || runStatus === 'in_progress';
+    const active = state.status === 'queued' || state.status === 'in_progress';
     if (!active) return;
     const id = setInterval(checkStatus, 10_000);
     return () => clearInterval(id);
-  }, [runStatus, checkStatus]);
+  }, [state.status, checkStatus]);
 
-  const runTests = async () => {
-    setTriggering(true);
+  const run = useCallback(async () => {
+    setState(s => ({ ...s, triggering: true, error: null }));
     try {
-      await fetch('/api/run-tests', { method: 'POST' });
-      setRunStatus('queued');
-      setConclusion(null);
-      setRunUrl(null);
+      const res = await fetch(`/api/run-tests?type=${type}`, { method: 'POST' });
+      if (res.ok) {
+        setState(s => ({ ...s, status: 'queued', conclusion: null, runUrl: null }));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setState(s => ({ ...s, error: data.error ?? `Error ${res.status}` }));
+      }
+    } catch {
+      setState(s => ({ ...s, error: 'Network error — could not reach the server.' }));
     } finally {
-      setTriggering(false);
+      setState(s => ({ ...s, triggering: false }));
     }
-  };
+  }, [type]);
 
-  const isRunning = triggering || runStatus === 'queued' || runStatus === 'in_progress';
-  const isDone = runStatus === 'completed';
-  const passed = isDone && conclusion === 'success';
+  return { ...state, run };
+}
 
-  const statusLabel = isRunning
-    ? runStatus === 'in_progress' ? '● Running…' : '● Queued…'
-    : isDone
-    ? passed ? '✓ Passed' : '✗ Failed'
-    : null;
+function StatusBadge({ status, conclusion }: { status: RunStatus; conclusion: string | null }) {
+  const isRunning = status === 'queued' || status === 'in_progress';
+  const isDone = status === 'completed';
+  if (!isRunning && !isDone) return null;
 
-  const statusColor = isRunning ? '#f59e0b' : passed ? '#22c55e' : '#ef4444';
-  const reportSrc = activeTab === 'ui' ? '/report.html' : '/api-report.html';
+  const label = isRunning
+    ? (status === 'in_progress' ? '● Running…' : '● Queued…')
+    : conclusion === 'success' ? '✓ Passed' : '✗ Failed';
 
-  const tabStyle = (tab: ReportTab) => ({
-    padding: '4px 14px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer' as const,
-    fontSize: '13px',
-    fontWeight: activeTab === tab ? 600 : 400,
-    background: activeTab === tab ? '#3b82f6' : '#1e293b',
-    color: activeTab === tab ? '#fff' : '#94a3b8',
-    transition: 'background 0.15s',
+  const color = isRunning ? '#f59e0b' : conclusion === 'success' ? '#22c55e' : '#ef4444';
+
+  return <span style={{ fontSize: '13px', color, fontWeight: 500 }}>{label}</span>;
+}
+
+export default function Home() {
+  const [activeTab, setActiveTab] = useState<ReportTab>('ui');
+  const ui = useTestRunner('ui');
+  const api = useTestRunner('api');
+  const runner = activeTab === 'ui' ? ui : api;
+
+  const isRunning = runner.triggering || runner.status === 'queued' || runner.status === 'in_progress';
+  const isDone = runner.status === 'completed';
+  const reportSrc = activeTab === 'ui' ? '/ui-report/index.html' : '/api-report.html';
+
+  const tabBtn = (tab: ReportTab, label: string) => ({
+    onClick: () => setActiveTab(tab),
+    style: {
+      padding: '4px 14px',
+      borderRadius: '6px',
+      border: 'none',
+      cursor: 'pointer' as const,
+      fontSize: '13px',
+      fontWeight: activeTab === tab ? 600 : 400,
+      background: activeTab === tab ? '#3b82f6' : 'transparent',
+      color: activeTab === tab ? '#fff' : '#94a3b8',
+    },
+    children: label,
   });
 
   return (
@@ -90,74 +115,64 @@ export default function Home() {
         flexShrink: 0,
       }}>
         <span style={{ fontSize: '18px' }}>🎭</span>
-        <span style={{ fontWeight: 600, fontSize: '15px', color: '#f1f5f9' }}>
-          Allocations QA
-        </span>
+        <span style={{ fontWeight: 600, fontSize: '15px', color: '#f1f5f9' }}>Allocations QA</span>
 
-        <div style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
-          <button style={tabStyle('ui')} onClick={() => setActiveTab('ui')}>UI</button>
-          <button style={tabStyle('api')} onClick={() => setActiveTab('api')}>API</button>
+        <div style={{ display: 'flex', gap: '2px' }}>
+          <button {...tabBtn('ui', 'UI')}>UI</button>
+          <button {...tabBtn('api', 'API')}>API</button>
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {statusLabel && (
-            <span style={{ fontSize: '13px', color: statusColor, fontWeight: 500 }}>
-              {statusLabel}
-            </span>
-          )}
+          <StatusBadge status={runner.status} conclusion={runner.conclusion} />
 
-          {isDone && runUrl && (
-            <a href={runUrl} target="_blank" rel="noreferrer" style={{
-              fontSize: '12px', color: '#64748b', textDecoration: 'none',
-            }}>
+          {isDone && runner.runUrl && (
+            <a href={runner.runUrl} target="_blank" rel="noreferrer"
+              style={{ fontSize: '12px', color: '#64748b', textDecoration: 'none' }}>
               View run ↗
             </a>
           )}
 
           {isDone && (
             <button onClick={() => window.location.reload()} style={{
-              padding: '4px 10px',
-              borderRadius: '6px',
-              border: '1px solid #334155',
-              background: 'transparent',
-              color: '#94a3b8',
-              fontSize: '12px',
-              cursor: 'pointer',
+              padding: '4px 10px', borderRadius: '6px',
+              border: '1px solid #334155', background: 'transparent',
+              color: '#94a3b8', fontSize: '12px', cursor: 'pointer',
             }}>
               Reload reports
             </button>
           )}
 
           <button
-            onClick={runTests}
+            onClick={runner.run}
             disabled={isRunning}
             style={{
-              padding: '6px 16px',
-              borderRadius: '6px',
-              border: 'none',
+              padding: '6px 16px', borderRadius: '6px', border: 'none',
               cursor: isRunning ? 'not-allowed' : 'pointer',
-              fontSize: '13px',
-              fontWeight: 600,
+              fontSize: '13px', fontWeight: 600,
               background: isRunning ? '#334155' : '#3b82f6',
               color: isRunning ? '#64748b' : '#fff',
-              transition: 'background 0.15s',
             }}
           >
-            {triggering ? 'Triggering…' : isRunning ? 'Running…' : 'Run Tests'}
+            {runner.triggering ? 'Triggering…' : isRunning ? 'Running…' : `Run ${activeTab.toUpperCase()} Tests`}
           </button>
 
           <a href={reportSrc} target="_blank" rel="noreferrer" style={{
-            fontSize: '13px',
-            color: '#94a3b8',
-            textDecoration: 'none',
-            border: '1px solid #334155',
-            padding: '4px 10px',
-            borderRadius: '6px',
+            fontSize: '13px', color: '#94a3b8', textDecoration: 'none',
+            border: '1px solid #334155', padding: '4px 10px', borderRadius: '6px',
           }}>
             Open ↗
           </a>
         </div>
       </header>
+
+      {runner.error && (
+        <div style={{
+          padding: '8px 20px', background: '#7f1d1d', color: '#fca5a5',
+          fontSize: '13px', borderBottom: '1px solid #991b1b',
+        }}>
+          ⚠ {runner.error}
+        </div>
+      )}
 
       <iframe
         key={reportSrc}

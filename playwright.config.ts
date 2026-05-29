@@ -19,7 +19,7 @@ export default defineConfig({
     baseURL: process.env.BASE_URL,
     headless: !!process.env.CI,
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: process.env.CI ? 'on' : 'retain-on-failure',
   },
   projects: [
     {
