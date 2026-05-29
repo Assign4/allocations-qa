@@ -37,18 +37,21 @@ jobs:
           rm -rf public/ui-report
           [ -d reports/ui ] && cp -r reports/ui public/ui-report || true
 
-      - name: Update runs history
-        run: node scripts/update-runs.js ui ${{ steps.tests.outcome }}
-
       - name: Write deploy marker
         run: |
           echo "{\"timestamp\": $(date +%s%3N), \"type\": \"ui\"}" > public/last-updated.json
 
       - name: Commit and push
+        env:
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Pull latest first so runs.json is up to date before we append
+          git pull --rebase origin main
+          # Append this run to the freshly pulled runs.json
+          node scripts/update-runs.js ui "$TEST_OUTCOME"
           git add public/ui-report public/runs.json public/last-updated.json
           git diff --staged --quiet || git commit -m "chore: update UI test report [skip ci]"
-          git pull --rebase origin main
-          git push
+          # Retry push once in case of a concurrent push
+          git push || (git pull --rebase origin main && git push)
