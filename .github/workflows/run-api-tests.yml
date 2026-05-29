@@ -28,14 +28,20 @@ jobs:
           MAILSAC_API_KEY: ${{ secrets.MAILSAC_API_KEY }}
         run: npm run test:api
 
-      - name: Publish API report
+      - name: Publish API report and log
         run: |
           [ -f reports/api/index.html ] && cp reports/api/index.html public/api-report.html || true
+          LATEST_LOG=$(ls -t logs/*.log 2>/dev/null | head -1)
+          [ -n "$LATEST_LOG" ] && cp "$LATEST_LOG" public/api-execution.log || true
+
+      - name: Write deploy marker
+        run: |
+          echo "{\"timestamp\": $(date +%s%3N), \"type\": \"api\"}" > public/last-updated.json
 
       - name: Commit and push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/api-report.html
+          git add public/api-report.html public/api-execution.log public/last-updated.json
           git diff --staged --quiet || git commit -m "chore: update API test report [skip ci]"
           git push

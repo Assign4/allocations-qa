@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>API Execution Log — Allocations QA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #cbd5e1;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    header {
+      padding: 10px 20px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header span { font-weight: 600; font-size: 14px; color: #f1f5f9; font-family: system-ui; }
+    #log {
+      padding: 20px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .ts   { color: #475569; }
+    .lvl  { font-weight: 700; }
+    .debug { color: #94a3b8; }
+    .info  { color: #60a5fa; }
+    .warn  { color: #fbbf24; }
+    .error { color: #f87171; }
+    .key   { color: #93c5fd; }
+    .str   { color: #86efac; }
+    .num   { color: #fdba74; }
+    .bool  { color: #c084fc; }
+  </style>
+</head>
+<body>
+  <header>
+    <span>📋 API Execution Log</span>
+  </header>
+  <div id="log">Loading…</div>
+
+  <script>
+    const el = document.getElementById('log');
+
+    function colorize(text) {
+      return text
+        .replace(/\[(\d{4}-\d{2}-\d{2}[^\]]+)\]/g, '<span class="ts">[$1]</span>')
+        .replace(/\b(DEBUG)\b/g, '<span class="lvl debug">$1</span>')
+        .replace(/\b(INFO)\b/g,  '<span class="lvl info">$1</span>')
+        .replace(/\b(WARN)\b/g,  '<span class="lvl warn">$1</span>')
+        .replace(/\b(ERROR)\b/g, '<span class="lvl error">$1</span>')
+        .replace(/"([^"]+)"(\s*:)/g, '<span class="key">"$1"</span>$2')
+        .replace(/:\s*"([^"]*)"/g, ': <span class="str">"$1"</span>')
+        .replace(/:\s*(\d+(?:\.\d+)?)\b/g, ': <span class="num">$1</span>')
+        .replace(/:\s*(true|false)\b/g, ': <span class="bool">$1</span>');
+    }
+
+    fetch('/api-execution.log?_=' + Date.now())
+      .then(r => r.ok ? r.text() : Promise.reject(r.status))
+      .then(text => {
+        if (!text.trim() || text.startsWith('No API')) {
+          el.textContent = 'No log available yet — run API tests to generate one.';
+        } else {
+          el.innerHTML = colorize(text.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+        }
+      })
+      .catch(() => { el.textContent = 'Could not load log file.'; });
+  </script>
+</body>
+</html>
