@@ -48,7 +48,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Pull latest first so runs.json is up to date before we append
-          git pull --rebase origin main
+          git pull --rebase --autostash origin main
           # Append this run to the freshly pulled runs.json
           node scripts/update-runs.js ui "$TEST_OUTCOME"
           git add public/ui-report public/runs.json public/last-updated.json
