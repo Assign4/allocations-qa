@@ -1,5 +1,12 @@
 [
   {
+    "id": "26657098112",
+    "type": "ui",
+    "status": "passed",
+    "date": "2026-05-29T19:14:58.045Z",
+    "runUrl": "https://github.com/Assign4/allocations-qa/actions/runs/26657098112"
+  },
+  {
     "id": "26657100984",
     "type": "api",
     "status": "passed",
