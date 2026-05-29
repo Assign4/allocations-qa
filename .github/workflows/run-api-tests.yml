@@ -21,6 +21,7 @@ jobs:
         run: npm ci
 
       - name: Run API tests
+        id: tests
         continue-on-error: true
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
@@ -34,6 +35,9 @@ jobs:
           LATEST_LOG=$(ls -t logs/*.log 2>/dev/null | head -1)
           [ -n "$LATEST_LOG" ] && cp "$LATEST_LOG" public/api-execution.log || true
 
+      - name: Update runs history
+        run: node scripts/update-runs.js api ${{ steps.tests.outcome }}
+
       - name: Write deploy marker
         run: |
           echo "{\"timestamp\": $(date +%s%3N), \"type\": \"api\"}" > public/last-updated.json
@@ -42,6 +46,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/api-report.html public/api-execution.log public/last-updated.json
+          git add public/api-report.html public/api-execution.log public/runs.json public/last-updated.json
           git diff --staged --quiet || git commit -m "chore: update API test report [skip ci]"
           git push
