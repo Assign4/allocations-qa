@@ -1,0 +1,53 @@
+name: Run QA Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run API tests
+        continue-on-error: true
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          MAILSAC_API_KEY: ${{ secrets.MAILSAC_API_KEY }}
+        run: npm run test:api
+
+      - name: Run UI tests
+        continue-on-error: true
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          MAILSAC_API_KEY: ${{ secrets.MAILSAC_API_KEY }}
+        run: npm run test:ui
+
+      - name: Copy reports to public/
+        run: |
+          [ -f reports/ui/index.html ]  && cp reports/ui/index.html  public/report.html    || true
+          [ -f reports/api/index.html ] && cp reports/api/index.html public/api-report.html || true
+
+      - name: Commit and push reports
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/report.html public/api-report.html
+          git diff --staged --quiet || git commit -m "chore: update test reports [skip ci]"
+          git push
