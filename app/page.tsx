@@ -354,9 +354,9 @@ export default function Home() {
                 {allRows.map((run, i) => {
                   const live = 'live' in run;
                   return (
-                    <tr key={run.id} style={{ borderBottom: i < allRows.length - 1 ? `1px solid ${T.border}` : 'none', transition: 'background 0.1s' }}
-                      onMouseEnter={e => { if (!live) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                    <tr key={run.id} style={{ borderBottom: i < allRows.length - 1 ? `1px solid ${T.border}` : 'none', background: i % 2 ? '#f8fafc' : '#fff', transition: 'background 0.1s' }}
+                      onMouseEnter={e => { if (!live) (e.currentTarget as HTMLElement).style.background = '#eef2ff'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = i % 2 ? '#f8fafc' : '#fff'; }}>
                       <td style={{ padding: '14px 20px' }}>
                         {live
                           ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><PulseDot color={T.running} /><span style={{ color: T.running, fontWeight: 700 }}>Running…</span></span>
