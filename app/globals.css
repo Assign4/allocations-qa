@@ -1,23 +1,84 @@
 @keyframes qa-spin {
   to { transform: rotate(360deg); }
 }
-
 @keyframes qa-ping {
   0%        { transform: scale(1);   opacity: 0.9; }
   75%, 100% { transform: scale(2.4); opacity: 0;   }
 }
-
 @keyframes qa-bounce {
   0%, 100% { transform: translateY(0);    opacity: 0.35; }
   50%       { transform: translateY(-4px); opacity: 1;    }
 }
-
 @keyframes qa-shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
 }
-
 @keyframes qa-fade-slide {
   from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── layout helpers ───────────────────────────────────────────── */
+.qa-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 28px;
+}
+.qa-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.qa-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.qa-content {
+  padding: 28px;
+}
+.qa-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.qa-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.qa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 540px;
+}
+.qa-report-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 20px;
+}
+.qa-report-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── mobile ───────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .qa-header          { padding: 12px 16px; gap: 8px; }
+  .qa-header-actions  { margin-left: 0; width: 100%; justify-content: flex-start; }
+  .qa-content         { padding: 16px; }
+  .qa-stats           { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .qa-hide-mobile     { display: none !important; }
+  .qa-report-header   { padding: 10px 14px; }
+  .qa-report-actions  { margin-left: 0; width: 100%; }
 }
