@@ -251,17 +251,17 @@ export default function Home() {
   // ── REPORT VIEW ──────────────────────────────────────────────────────
   if (view === 'report') {
     return (
-      <main style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f172a' }}>
-        <header style={{ padding: '10px 20px', background: '#1e293b', borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <button onClick={() => setView('list')} style={{ background: 'transparent', border: '1px solid #475569', color: '#94a3b8', padding: '5px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 13 }}>← Runs</button>
+      <main style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: T.bg }}>
+        <header style={{ padding: '12px 20px', background: 'linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, boxShadow: '0 2px 8px rgba(79,70,229,0.3)' }}>
+          <button onClick={() => setView('list')} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', padding: '5px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>← Runs</button>
           <span style={{ fontSize: 16 }}>🎭</span>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9' }}>{activeType.toUpperCase()} Report</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>{activeType.toUpperCase()} Report</span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
             <InlineBadge runner={runner} />
-            {runner.runUrl && <a href={runner.runUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#64748b', textDecoration: 'none' }}>View run ↗</a>}
-            {activeType === 'api' && <a href="/api-logs.html" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#94a3b8', textDecoration: 'none', border: '1px solid #334155', padding: '4px 8px', borderRadius: 6 }}>Logs ↗</a>}
+            {runner.runUrl && <a href={runner.runUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#c7d2fe', textDecoration: 'none' }}>View run ↗</a>}
+            {activeType === 'api' && <a href="/api-logs.html" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#c7d2fe', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.25)', padding: '4px 8px', borderRadius: 6 }}>Logs ↗</a>}
             <RunBtn runner={runner} label={`Run ${activeType.toUpperCase()} Tests`} />
-            <a href={reportSrc} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'none', border: '1px solid #334155', padding: '4px 10px', borderRadius: 6 }}>Open ↗</a>
+            <a href={reportSrc} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#c7d2fe', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.25)', padding: '4px 10px', borderRadius: 6 }}>Open ↗</a>
           </div>
         </header>
         {runner.error && <div style={{ padding: '8px 20px', background: '#7f1d1d', color: '#fca5a5', fontSize: 13 }}>⚠ {runner.error}</div>}
